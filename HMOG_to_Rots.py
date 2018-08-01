@@ -31,7 +31,7 @@ Root = "/Users/pauldavid/Documents/My_Files/Applications/Jobs/2018_UNIFYID/Data/
 List = os.listdir(Root)
 L = len(List)
 
-for i in range(138,L):
+for i in range(L):
     sub_dir = Root + "/" + List[i]
     if os.path.isdir(sub_dir):
         sub_list = os.listdir(sub_dir)
