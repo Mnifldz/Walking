@@ -17,7 +17,7 @@ import soft_gyro_toolkit as sg
 
 # Main Loop for Gyro Reconstruction and Error Analysis
 #------------------------------------------------------------------------------
-Root = "/Users/pauldavid/Documents/My_Files/Applications/Jobs/2018_UNIFYID/Data/HMOG/public_dataset"
+Root = "/Volumes/Seagate Backup Plus Drive/UnifyID/HMOG/public_dataset"
 List = os.listdir(Root)
 L = len(List)
 
