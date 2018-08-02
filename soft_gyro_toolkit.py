@@ -116,6 +116,7 @@ def mat_to_row(mat):
 
 # Soft Gyroscope Function
 #------------------------------------------------------------------------------
+# Find time step from global time stamp
 def time_diffs(times):
     """ This function takes the absolute time stamps and converts them into 
         relative time stamps (in seconds)."""
@@ -127,11 +128,8 @@ def time_diffs(times):
         else:
             time_stamp.append( 0.001*(times[i] - times[i-1]) )
     return time_stamp
-
-def stupid_func(vec):
-    return vec
             
-
+# SOFT GYROSCOPE FUNCTION
 def soft_gyroscope(Gravity, Magnet):
     """ Returns a soft gyroscope approximation based on gravity and magnetometer
         data.  Constructs the matrix and uses a Lie algebra approximation for the 
