@@ -22,8 +22,9 @@ List = os.listdir(Root)
 L = len(List)
 
 master_stats = pd.DataFrame()
+inds = [x for x in range(118) ]  + [x for x in range(119,L)]
 
-for i in range(L):
+for i in inds:
     sub_dir = Root + "/" + List[i]
     if os.path.isdir(sub_dir):
         sub_list = os.listdir(sub_dir)
@@ -45,7 +46,7 @@ for i in range(L):
                 Grav = sg.get_gravity(Acc[0:least,3:6])
                 Mag  = sg.clean_mag(pre_mag[0:least,3:6], Grav)
                 Gyro = Gyro[0:least,:]
-                time_stamp = sg.time_diffs(Acc[0:least,0])
+                #time_stamp = sg.time_diffs(Acc[0:least,0])
                 
                 # Run Soft Gyroscope and Error Analysis
                 start = time.time()
