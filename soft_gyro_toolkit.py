@@ -11,6 +11,7 @@
 import numpy as np
 from scipy.signal import butter, lfilter, medfilt
 from numpy import linalg as LA
+from pyquaternion import Quaternion
 #import warnings
 
 # Gravity Extraction
@@ -86,6 +87,32 @@ def clean_mag(mag, g):
     mag = np.apply_along_axis(medfilt, 0, mag)
     
     return mag
+
+# Angular and Quaternion Functions
+#------------------------------------------------------------------------------
+# Find Euler Angles from Gravity and Magnetometer
+def Euler_Angs(B,g):
+    """Input magnetometer vector B and gravity vector g both in the device frame."""
+    phi = np.arctan2(2*g[:,1], g[:,2])
+    theta = np.arctan2(-g[:,0], np.multiply(g[:,1],np.sin(phi)) + np.multiply(g[:,2],np.cos(phi)) ) 
+    psi = np.arctan2( np.multiply(B[:,2],np.sin(phi)) - np.multiply(B[:,1],np.cos(phi)), np.multiply(B[:,0],np.cos(theta)) + np.multiply(np.multiply(B[:,1],np.sin(phi)),np.sin(theta)) + np.multiply(np.multiply(B[:,2],np.sin(theta)),np.cos(phi)) )
+    return [phi,theta,psi]
+
+# Quaternion from Euler Angles
+def Ang2Qt(phi,theta,psi):
+    """Takes Euler angles and outputs their quaternion representation."""
+    L = phi.shape[0]
+    Q_x = [Quaternion(np.cos(phi[i]/2), np.sin(phi[i]/2),0,0) for i in range(L)] 
+    Q_y = [Quaternion(np.cos(theta[i]/2), 0, np.sin(theta[i]/2), 0) for i in range(L)]
+    Q_z = [Quaternion(np.cos(psi[i]/2),0,0, np.sin(psi[i]/2)) for i in range(L)]
+    return [Q_x[i]*Q_y[i]*Q_z[i] for i in range(L)]
+
+# Quaternion Derivative
+def Q_Deriv(q_old, q_new, samp):
+    """Takes old and new quaternion values and approximates their derivative with 'samp'
+    as the sample rate (i.e. time difference between observations)."""
+    return (q_new - q_old)/samp
+
         
 # Lie Group Exponential and Logarithm
 #------------------------------------------------------------------------------
@@ -127,10 +154,11 @@ def time_diffs(times):
             time_stamp.append(0)
         else:
             time_stamp.append( 0.001*(times[i] - times[i-1]) )
-    return time_stamp
+    new_stamp = [x if x!=0 else 0.01 for x in time_stamp]
+    return new_stamp
             
-# SOFT GYROSCOPE FUNCTION
-def soft_gyroscope(Gravity, Magnet):
+# SOFT GYROSCOPE FUNCTION (Lie group)
+def soft_gyro_Lie(Gravity, Magnet):
     """ Returns a soft gyroscope approximation based on gravity and magnetometer
         data.  Constructs the matrix and uses a Lie algebra approximation for the 
         final reconstruction."""
@@ -153,6 +181,23 @@ def soft_gyroscope(Gravity, Magnet):
             soft_gyro_Lie[i,:] = mat_to_row(Lie_Alg)
             MATS_Lie[0] = MATS_Lie[1]  
     return soft_gyro_Lie
+
+# SOFT GYROSCOPE FUNCTION (quaternion)
+def soft_gyro_quat(Gravity, Magnet, Times):
+    """ Returns a soft gyroscope approximation based on gravity and magnetometer
+        data.  Constructs the matrix and uses a quaternion approach for the final
+        reconstruction."""
+    L = Gravity.shape[0]
+    SoftGyro_Quat = np.zeros([L-1,3])
+    [phi, theta, psi] = Euler_Angs(Magnet, Gravity)
+    Quats = Ang2Qt(phi,theta,psi)
+    new_T = time_diffs(Times)
+    Q_dots = [Q_Deriv(Quats[i+1],Quats[i],new_T[i+1]) for i in range(L-1)]
+    for i in range(L-1):
+        vec = 2*Quats[i].inverse*Q_dots[i]
+        SoftGyro_Quat[i,:] = vec.imaginary
+    return SoftGyro_Quat
+    
 
 # Error Analysis
 #------------------------------------------------------------------------------
