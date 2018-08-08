@@ -100,12 +100,13 @@ to_hist = ["runtime", "error", "rmse_1", "rmse_2", "rmse_3"]
 Titles  = ["Run Times", "Error", "RMSE (Roll)", "RMSE (Pitch)", "RMSE (Yaw)"]
 
 for i in range(len(to_hist)):
-    
-    plt.hist(master_stats[to_hist[i]].dropna(), bins = 15)
+    vec = [float(x) for x in master_stats[to_hist[i]].dropna()]
+    plt.hist(vec, bins = 15)
     plt.title("Soft Gyro (Lie) - " + Titles[i])
     plt.ylabel("Number of Users")
     plt.savefig(Root + "/SG_Lie_Hist_" + to_hist[i] + ".eps")
     
+    vec_Q = [float(x) for x in master_stats_Q[to_hist[i]].dropna()] 
     plt.hist(master_stats_Q[to_hist[i]].dropna(), bins = 15)
     plt.title("Soft Gyro (Quaternion) - " + Titles[i])
     plt.ylabel("Number of Users")
