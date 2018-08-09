@@ -8,6 +8,7 @@
 # Libraries
 #------------------------------------------------------------------------------
 import pandas as pd
+import numpy as np
 import find_crossings as fc
 import matplotlib.pyplot as plt
 import numVector
@@ -62,12 +63,50 @@ for ind in range(gyro_train_x.shape[0]):
     save_name = save_dir + "/gyro_train_ind=" + str(ind) + ".eps"
     Dicts += [example(gyro_train_x.loc[ind,:], gyro_train_y.loc[ind,:], gyro_train_z.loc[ind,:], 0.02, save_name)]
 
+Root_test = "/Volumes/Seagate Backup Plus Drive/UnifyID/HAPT/UCI HAR Dataset/test/Inertial Signals/"
+
+Files_test = [Root_test + "body_gyro_" + i + "_test.txt" for i in ["x", "y", "z"]]
+
+gyro_test_x = pd.read_fwf(Files_test[0], header = None)
+gyro_test_y = pd.read_fwf(Files_test[1], header = None)
+gyro_test_z = pd.read_fwf(Files_test[2], header = None)
+
+Dicts_test = []
+save_dir_test = Root_test + "crossings"
+if os.path.isdir(save_dir_test) == 0:
+    os.makedirs(save_dir_test)
+    
+for inds in range(gyro_test_x.shape[0]):
+    save_test = save_dir_test + "/gyro_test_ind=" + str(inds) + ".eps"
+    Dicts_test += [example(gyro_test_x.loc[inds,:], gyro_test_y.loc[inds,:], gyro_test_z.loc[inds,:], 0.02, save_test)]
 
 
+# Convert and save Cross Times
+#------------------------------------------------------------------------------
+cross_times_train = []
+Cross_Times_Train = []
+cross_times_test = []
+Cross_Times_Test = []
 
+# Training Cross Times
+for i in range(gyro_train_x.shape[0]):
+    cross_times_train += [Dicts[i][('x', 'y')] + Dicts[i][('z', 'x')] + Dicts[i][('y', 'z')]]
 
+Cross_Times_Train = np.zeros([len(cross_times_train), len(max(cross_times_train,key = lambda x: len(x)))])
+for i,j in enumerate(cross_times_train):
+    Cross_Times_Train[i][0:len(j)] = j
+    
+np.savetxt(save_dir + "/_train_cross_times.csv", Cross_Times_Train, delimiter = ",")
 
-
+# Testing Cross Times
+for i in range(gyro_test_x.shape[0]):
+    cross_times_test += [Dicts_test[i][('x', 'y')] + Dicts_test[i][('z', 'x')] + Dicts_test[i][('y', 'z')]]
+    
+Cross_Times_Test = np.zeros([len(cross_times_test), len(max(cross_times_test,key = lambda x: len(x)))])
+for i,j in enumerate(cross_times_test):
+    Cross_Times_Test[i][0:len(j)] = j
+    
+np.savetxt(save_dir_test + "/_test_cross_times.csv", Cross_Times_Test, delimiter = ",")
 
 
 
