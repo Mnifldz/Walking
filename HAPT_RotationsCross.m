@@ -65,7 +65,7 @@ Rots = zeros(3,3,L_time);
 Rots_Train = {};
 Rots_Test  = {};
 
-for i = 1:L_train
+for i = 7200:L_train % Last index used
     fprintf(strcat("Processing file", " ", int2str(i), " ", "of", " ", int2str(L_train), "\n")) 
     Rots = Gyro_2_Rots(x_train(i,:), y_train(i,:), z_train(i,:));
     Rots_Train{i,1} = Rots;
