@@ -122,10 +122,14 @@ def TRAIN(Dir):
     for j in range(6):
         print("Training Class " + str(j+1) + " of 6")
         sub_inds = [k for k in range(LL) if j == train_labels.loc[k,0]-1]
-        inds     = [int(Labels[k]) for k in sub_inds]
+        inds     = [Labels.index(k) for k in sub_inds]
         
-        mean_class = pd.DataFrame(data = Means[inds,:]).reset_index(drop = True)
-        cov_class  = pd.DataFrame(data = Covs[inds,:]).reset_index(drop = True)
+        samp_size = 1500
+        rand_ints = np.random.choice(len(inds), samp_size, replace = False)
+        sub_inds  = [inds[rand_ints[i]] for i in range(samp_size)]
+        
+        mean_class = pd.DataFrame(data = Means[sub_inds,:]).reset_index(drop = True)
+        cov_class  = pd.DataFrame(data = Covs[sub_inds,:]).reset_index(drop = True)
         
         print("Finding Geodesic Mean")
         New_Mean_geo = wt.SO3_geo_mean(mean_class, 0.05)
@@ -173,7 +177,7 @@ def CLASSIFY(MEAN_GEO, COV_GEO, MEAN_LIN, COV_LIN, Dir):
     # Classification Data Frame
     geo_cols = ["Geo_dist_" + str(i) for i in range(1,7)]
     lin_cols = ["Lin_dist_" + str(i) for i in range(1,7)]
-    Cols     = geo_cols + lin_cols + ["Lin_Class", "Geo_Class", "Actual_Class", ]
+    Cols     = geo_cols + lin_cols + [ "Geo_Class", "Lin_Class", "Actual_Class", ]
     CLASSIFIED = pd.DataFrame(columns = Cols)
     
     # Classify Testing Data
@@ -192,8 +196,8 @@ def CLASSIFY(MEAN_GEO, COV_GEO, MEAN_LIN, COV_LIN, Dir):
         for s in range(6):
             new_row += [ np.sqrt(wt.SO3_dist(new_mean, Mean_Lin[s])**2 + wt.SPD_dist(new_cov, Cov_Lin[s])**2 ) ]
             
-        new_row += [new_row[:6].index(min(new_row[:6]))]
-        new_row += [new_row[6:].index(min(new_row[6:]))]
+        new_row += [new_row[:6].index(min(new_row[:6])) + 1]
+        new_row += [new_row[6:12].index(min(new_row[6:12])) + 1]
         new_row += [Labels.loc[i,0]]
         
         new_row = pd.DataFrame(data = [new_row], columns = Cols)
