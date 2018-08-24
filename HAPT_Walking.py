@@ -78,9 +78,9 @@ def TRAIN(Dir):
     L = len(Dir_List)
     
     Means = np.zeros([L,9])
-    Covs  = np.zeros([L,9])
+    #Covs  = np.zeros([L,9])
     mean_list = []
-    cov_list  = []
+    #cov_list  = []
     Labels    = []
     
     save_dir = Dir + "/Distributions"
@@ -94,12 +94,12 @@ def TRAIN(Dir):
         rots = pd.read_csv(rots_dir + "/" + Dir_List[i], delimiter = ",", header = None)
         
         new_mean,_,_,_ = wt.SO3_geo_mean(rots, 0.05)
-        new_cov    = wt.SO3_cov(rots, new_mean)
+        #new_cov    = wt.SO3_cov(rots, new_mean)
         Means[i,:] = new_mean.reshape([1,9])
-        Covs[i,:]  = new_cov.reshape([1,9])
+        #Covs[i,:]  = new_cov.reshape([1,9])
         
         mean_list += [new_mean]
-        cov_list  += [new_cov]
+        #cov_list  += [new_cov]
         
         lab_1 = Dir_List[i].find("=")
         lab_2 = Dir_List[i].find(".")
@@ -107,7 +107,7 @@ def TRAIN(Dir):
         
     # Save individual distributions
     np.savetxt(save_dir + "/Rots_Individual_Means.csv", Means, delimiter = ",")
-    np.savetxt(save_dir + "/Rots_Individual_Covs.csv", Covs, delimiter = ",")
+    #np.savetxt(save_dir + "/Rots_Individual_Covs.csv", Covs, delimiter = ",")
     np.savetxt(save_dir + "/Rots_Individual_Labels.csv", Labels, delimiter = ",")
     
     
@@ -124,26 +124,31 @@ def TRAIN(Dir):
         sub_inds = [k for k in range(LL) if j == train_labels.loc[k,0]-1]
         inds     = [Labels.index(k) for k in sub_inds]
         
-        samp_size = 1500
-        rand_ints = np.random.choice(len(inds), samp_size, replace = False)
-        sub_inds  = [inds[rand_ints[i]] for i in range(samp_size)]
+        #samp_size = 2500
+        #rand_ints = np.random.choice(len(inds), samp_size, replace = False)
+        #sub_inds  = [inds[rand_ints[i]] for i in range(samp_size)]
         
-        mean_class = pd.DataFrame(data = Means[sub_inds,:]).reset_index(drop = True)
-        cov_class  = pd.DataFrame(data = Covs[sub_inds,:]).reset_index(drop = True)
+        #mean_class = pd.DataFrame(data = Means[sub_inds,:]).reset_index(drop = True)
+        #cov_class  = pd.DataFrame(data = Covs[sub_inds,:]).reset_index(drop = True)
+        
+        # Use Full Set
+        mean_class = pd.DataFrame(data = Means[inds,:]).reset_index(drop = True)
+        #cov_class  = pd.DataFrame(data = Covs[inds,:]).reset_index(drop = True)
         
         print("Finding Geodesic Mean")
-        New_Mean_geo = wt.SO3_geo_mean(mean_class, 0.05)
+        New_Mean_geo,_,_,_ = wt.SO3_geo_mean(mean_class, 0.05)
         print("Finding Geodesic Covariance")
-        New_Cov_geo = wt.cov_geo_mean(cov_class, 0.05)
+        #New_Cov_geo = wt.cov_geo_mean(cov_class, 0.05)
+        New_Cov  = wt.SO3_cov(mean_class, New_Mean_geo)
         
         print("FInding Linear Mean and Covariance")
         New_Mean_lin = wt.SO3_lin_mean(mean_class)
-        New_Cov_lin  = wt.cov_lin_mean(cov_class)
+        #New_Cov_lin  = wt.cov_lin_mean(cov_class)
         
-        MEAN_GEO[j,:] = New_Mean_geo[0].reshape([1,9])
-        COV_GEO[j,:]  = New_Cov_geo[0].reshape([1,9])
+        MEAN_GEO[j,:] = New_Mean_geo.reshape([1,9])
+        COV_GEO[j,:]  = New_Cov.reshape([1,9])
         MEAN_LIN[j,:] = New_Mean_lin.reshape([1,9])
-        COV_LIN[j,:]  = New_Cov_lin.reshape([1,9])
+        COV_LIN[j,:]  = New_Cov.reshape([1,9])
         
         
     np.savetxt(save_dir + "/Rots_GeoClass_Means.csv", MEAN_GEO, delimiter = ",")
@@ -210,7 +215,17 @@ MEAN_GEO, COV_GEO, MEAN_LIN, COV_LIN = TRAIN("/Volumes/Seagate Backup Plus Drive
 STATS                                = CLASSIFY(MEAN_GEO, COV_GEO, MEAN_LIN, COV_LIN, "/Volumes/Seagate Backup Plus Drive/UnifyID/HAPT/UCI HAR Dataset/test")           
         
         
-        
+Geo_right = 0
+Lin_right = 0
+for j in range(2947):
+    if STATS.loc[j,"Geo_Class"] == STATS.loc[j,"Actual_Class"]:
+        Geo_right += 1
+    if STATS.loc[j,"Lin_Class"] == STATS.loc[j,"Actual_Class"]:
+        Lin_right += 1
+
+Geo_percent = Geo_right/2947
+Lin_percent = Lin_right/2947
+
         
 
     
